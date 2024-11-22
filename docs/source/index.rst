@@ -27,7 +27,7 @@ Installation
 
 ``H2Powerlaw`` can be installed using pip, either directly from the git repo::
 
-    # from the master trunk on the repository
+    # from the main trunk on the repository
     pip install git+https://github.com/astrolojo/H2Powerlaw
 
 ...or through PyPI (coming soon!)
