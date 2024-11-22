@@ -7,7 +7,7 @@ Overview and Dependencies
 
 ``H2Powerlaw`` model objects contain both a set of observed data and the parameters needed to generate a theoretical power-law (PL) excitation curve. For the example code below, we use H2 line fluxes for the galaxy NGC 5033 (given in Table 2 of Togi & Smith 2016, which in turn are obtained from the `SINGS <https://ui.adsabs.harvard.edu/abs/2003PASP..115..928K/abstract>`_ program). 
 
-This example is also provided as a notebook, which can be downloaded from the `git repo <https://github.com/astrolojo/SESAMME/issues>`_. 
+This example is also provided as a notebook, which can be downloaded from the `git repo <https://github.com/astrolojo/H2Powerlaw>`_. 
 
 ``H2Powerlaw`` relies on the following packages for its functionality. If you do not have these packages installed, you can install them using pip or conda.
 
