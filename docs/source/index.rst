@@ -7,7 +7,7 @@
 H2Powerlaw
 ###########
 
-``H2Powerlaw`` is a Python implementation of the H2 excitation model of `Togi & Smith (2016) <https://ui.adsabs.harvard.edu/abs/2016ApJ...830...18T/abstract>`_, which assumes a continuous, power-law distribution of H2 temperatures. 
+``H2Powerlaw`` is a Python implementation of the H\ :sub:2 excitation model of `Togi & Smith (2016) <https://ui.adsabs.harvard.edu/abs/2016ApJ...830...18T/abstract>`_, which assumes a continuous, power-law distribution of H\ :sub:2 temperatures. 
 
 .. toctree::
    :maxdepth: 2
