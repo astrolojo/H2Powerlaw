@@ -372,7 +372,7 @@ class H2Model:
         return np.log( np.array(list(modelratios.values())) )
 
     
-    def do_fit(self, j_obs, verbose = False, overwrite = False, exp = False):
+    def do_fit(self, j_obs, verbose = False, overwrite = False):
         """
         Fits the observed flux/column density ratios to the TS16 model for a given set of J_lower values. Uses scipy.curve_fit().
         
@@ -398,14 +398,9 @@ class H2Model:
         nratio_obs, _ = self.obs_ratio(j_obs)
         nratio_obs_err, _ = self.obs_ratio_uncert(j_obs)
 
-        if not exp:
-            params, cov = curve_fit(self.nratio_model, j_obs, np.log(nratio_obs), 
-                                    sigma = nratio_obs_err, bounds = ([3., 20.], [7., 300.]))
-            params_uncert = np.sqrt(np.diag(cov))
-        else:
-            params, cov = curve_fit(self.nratio_model_exp, j_obs, np.log(nratio_obs), 
-                                    sigma = nratio_obs_err, bounds = ([3., 20.], [7., 300.]))
-            params_uncert = np.sqrt(np.diag(cov))
+        params, cov = curve_fit(self.nratio_model, j_obs, np.log(nratio_obs), 
+                                sigma = nratio_obs_err, bounds = ([3., 20.], [7., 300.]))
+        params_uncert = np.sqrt(np.diag(cov))
 
         print("Modeling column density ratios for  J_lower =",str(j_obs))
         if verbose == True:
