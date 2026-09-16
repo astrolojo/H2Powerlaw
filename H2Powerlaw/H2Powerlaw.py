@@ -441,7 +441,7 @@ class H2Model:
         """
 
         if j_calc not in j_obs:
-            raise Exception("Transition "+str(j_)+" not in list of observed lines.")
+            raise Exception("Transition "+str(j_calc)+" not in list of observed lines.")
             
         else:
             j_obs = np.array(j_obs)
