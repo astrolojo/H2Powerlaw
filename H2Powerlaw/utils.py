@@ -56,18 +56,18 @@ def _is_jnorm_in(j_obs, j_norm):
     if j_norm not in j_obs:
         raise ValueError("J_norm = " + str(j_norm) + " not in list of observed transitions, which include J = " + str(j_obs))
 
-def _convert_to_cgs(model, arr):
+def _convert_to_cgs(arr):
     """
-    Converts fluxes and flux uncertainties to cgs units (erg / s / cm^2) for computing H2 columns and masses. Note
+    Converts fluxes and flux uncertainties to cgs units (erg / s / cm^2) for computing H2 columns and masses.
 
     Parameters
     ----------
-    arr : array-like
+    arr : array_like
         List or array of flux/uncertainty values
 
     Returns
     -------
-    arr_quantity : array-like
+    arr_quantity : array_like
         Array of flux/uncertainty values after conversion to cgs units. Returns the value only.
     """
 

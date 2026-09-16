@@ -24,9 +24,9 @@ We start by importing the ``H2Model`` class, which contains all the important me
 .. code-block:: python
 
  from H2Powerlaw import H2Model
- p1 = H2Model(flux =  1e-17 * np.array([3.66, 18.20, 06.35, 12.69]),
+ p1 = H2Model(flux =  1e-17 * np.array([3.66, 18.20, 6.35, 12.69]),
             flux_err = 1e-17 * np.array( [0.35, 1.04, 0.31,1.91] ),
-            j_obs = [0,1,2,3],
+            j_obs = [0, 1, 2, 3],
             f_unit = u.W / u.m**2
             )
 

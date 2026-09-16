@@ -31,11 +31,11 @@ class H2Model:
 
     Parameters
     ----------
-    flux : array-like
+    flux : array_like
         List or numpy array of line fluxes
-    flux_err : array-like
+    flux_err : array_like
         List or numpy array of line flux uncertainties
-    j_obs : array-like
+    j_obs : array_like
         List or numpy array of J_lower values associated with each line
     j_norm : int, optional
         Value of J_lower for the transition to which other lines are normalized
@@ -206,8 +206,19 @@ class H2Model:
             self._distance = Quantity
 
     def __str__(self):
-        return f"H2 Excitation Model"
+        if self.name is not None:
+            return f"H2 Excitation Model for {self.name}"
+        else:
+            return f"H2 Excitation Model for unnamed object"
 
+    def info(self):
+        x = f"H2Powerlaw instance for object {self.name}.  "\
+        f"Distance: {self.distance}. Populated J values: {self.j_obs}.  "\
+        f"See the properties x.flux, x.flux_err, and x.f_unit for populated flux values and units."
+        print(x)
+        return
+
+    
     
     def obs_ratio(self, j_obs):
         """
@@ -215,7 +226,7 @@ class H2Model:
         
         Parameters
         ----------
-        j_obs : array-like
+        j_obs : array_like
             List or numpy array of J_lower values associated with each line
 
         Returns
@@ -229,7 +240,7 @@ class H2Model:
         j_obs = np.array(j_obs)
         j_is_in = [j in j_obs for j in self.j_obs]
         flux_ = self.flux[j_is_in]
-        flux_ = utils._convert_to_cgs(self, flux_)
+        flux_ = utils._convert_to_cgs(flux_)
         
         
         utils._is_jnorm_in(j_obs, self.j_norm)
@@ -263,13 +274,13 @@ class H2Model:
         return np.array(list(fratios.values())), np.array(list(fratios.keys()))
 
 
-    def obs_flux_uncert(self, j_obs):
+    def obs_ratio_uncert(self, j_obs):
         """
         Normalize flux uncertainties (set when initializing the ``H2Model`` object) to those for some transition j_norm (also set at initialization). For flexibility, users specify J values of the transitions to use - this can be the entire set that was defined when initializing the model, or some subset. The chosen (sub)set MUST include the normalizing transition, default J_lower = 1.
         
         Parameters
         ----------
-        j_obs : array-like
+        j_obs : array_like
             List or numpy array of J_lower values associated with each line
 
         Returns
@@ -282,9 +293,9 @@ class H2Model:
         j_obs = np.array(j_obs)
         j_is_in = [j in j_obs for j in self.j_obs]
         flux_ = self.flux[j_is_in]
-        flux_ = utils._convert_to_cgs(self, flux_)
+        flux_ = utils._convert_to_cgs(flux_)
         flux_err_ = self.flux_err[j_is_in]
-        flux_err_ = utils._convert_to_cgs(self, flux_err_)
+        flux_err_ = utils._convert_to_cgs(flux_err_)
 
         utils._is_jnorm_in(j_obs, self.j_norm)
         
@@ -313,14 +324,14 @@ class H2Model:
         return np.array(list(fr_uncert.values())), np.array(list(fr_uncert.keys()))
 
 
-    @classmethod
-    def nratio_model(cls, j_obs, n, Tl, j_norm = 1, Tu = 2000.):
+    @staticmethod
+    def nratio_model(j_obs, n, Tl, j_norm = 1, Tu = 2000.):
         """
-        The theoretical column density ratios for transitions j_obs from the TS16 continuous temperature model (see their Equation 12). Can be used independently of a specific ``H2Model`` object to examine alternative fits.
+        The theoretical column density ratios for transitions j_obs in LTE from the TS16 continuous temperature model (see their Equation 12). Can be used independently of a specific ``H2Model`` object to examine alternative fits.
         
         Parameters
         ----------
-        j_obs : array-like
+        j_obs : array_like
             List or numpy array of J_lower values associated with each line
         n : float
             Slope of the power-law temperature distribution. Fittable parameter
@@ -360,14 +371,110 @@ class H2Model:
                 
         return np.log( np.array(list(modelratios.values())) )
 
+    @staticmethod
+    def nratio_model_exp(j_obs, n, Tl, j_norm = 1, Tu = 2000.):
+        """
+        The theoretical column density ratios for transitions j_obs in LTE from the TS16 continuous temperature model (see their Equation 12). Can be used independently of a specific ``H2Model`` object to examine alternative fits.
+        
+        Parameters
+        ----------
+        j_obs : array_like
+            List or numpy array of J_lower values associated with each line
+        n : float
+            Slope of the power-law temperature distribution. Fittable parameter
+        Tl : float
+            Lower temperature bound for the column density integral. Fittable parameter
+        j_norm : int, optional
+            Value of J_lower to which all flux/column density ratios are normalized
+        Tu : float, optional
+            Upper temperature bound for the column density integral
 
-    def do_fit(self, j_obs, verbose = False, overwrite = False):
+        Returns
+        -------
+        modelratios.values : dict.values
+            Array of model ln(N) ratios relative to J_norm
+        """
+
+        j_obs = np.array(j_obs)
+        ## Initialize an empty dictionary for the column density ratios
+        modelratios = dict()
+        
+        ## Retrieve parameters relevant to transition j_norm
+        g_norm, lam_norm, A_norm, Eu_norm = itemgetter('gu', 'lam', 'A', 'Eu')(linedict["S"+str(j_norm)])
+        
+        for j in utils.j_lower:
+            if j not in j_obs:
+                pass
+                
+            else:
+                ## Retrieve parameters relevant to transition j
+                g, lam, A, Eu = itemgetter('gu', 'lam', 'A', 'Eu')(linedict["S"+str(j)])
+                
+                ## Evaluate the numerator and denominator of TS16 equation 12
+                numer = integrate.quad(lambda t: (g / utils._evaluate_z(t)) * np.exp( -1 * Eu / t ) * t**(-1*n), Tl, Tu)
+                denom = integrate.quad(lambda t: (g_norm / utils._evaluate_z(t)) * np.exp( -1 * Eu_norm / t ) * t**(-1*n), Tl, Tu)
+                
+                modelratios["S"+str(j)] = numer[0]/denom[0]
+                
+        return np.log( np.array(list(modelratios.values())) )
+
+    # @staticmethod
+    # def nratio_model_opr(j_obs, n, Tl, opr, j_norm = 1, Tu = 2000.):
+    #     """
+    #     The theoretical column density ratios for transitions j_obs NOT in LTE from the TS16 continuous temperature model (see their Equation 12). Can be used independently of a specific ``H2Model`` object to examine alternative fits. Deviation from LTE parametrized by the non-equilibrium value of ortho-to-para ratio.
+        
+    #     Parameters
+    #     ----------
+    #     j_obs : array_like
+    #         List or numpy array of J_lower values associated with each line
+    #     n : float
+    #         Slope of the power-law temperature distribution. Fittable parameter
+    #     Tl : float
+    #         Lower temperature bound for the column density integral. Fittable parameter
+    #     opr : float
+    #         Ortho-para ratio
+    #     j_norm : int, optional
+    #         Value of J_lower to which all flux/column density ratios are normalized
+    #     Tu : float, optional
+    #         Upper temperature bound for the column density integral
+
+    #     Returns
+    #     -------
+    #     modelratios.values : dict.values
+    #         Array of model ln(N) ratios relative to J_norm
+    #     """
+
+    #     j_obs = np.array(j_obs)
+    #     ## Initialize an empty dictionary for the column density ratios
+    #     modelratios = dict()
+        
+    #     ## Retrieve parameters relevant to transition j_norm
+    #     g_norm, lam_norm, A_norm, Eu_norm = itemgetter('gu', 'lam', 'A', 'Eu')(linedict["S"+str(j_norm)])
+        
+    #     for j in utils.j_lower:
+    #         if j not in j_obs:
+    #             pass
+                
+    #         else:
+    #             ## Retrieve parameters relevant to transition j
+    #             g, lam, A, Eu = itemgetter('gu', 'lam', 'A', 'Eu')(linedict["S"+str(j)])
+                
+    #             ## Evaluate the numerator and denominator of TS16 equation 12
+    #             numer = integrate.quad(lambda t: (1 / utils._evaluate_z(t)) * np.exp( -1 * Eu / t ) * t**(-1*n), Tl, Tu)
+    #             denom = integrate.quad(lambda t: (1 / utils._evaluate_z(t)) * np.exp( -1 * Eu_norm / t ) * t**(-1*n), Tl, Tu)
+                
+    #             modelratios["S"+str(j)] = numer[0]/denom[0]
+                
+    #     return np.log( np.array(list(modelratios.values())) )
+
+
+    def do_fit(self, j_obs, verbose = False, overwrite = False, exp = False):
         """
         Fits the observed flux/column density ratios to the TS16 model for a given set of J_lower values. Uses scipy.curve_fit().
         
         Parameters
         ----------
-        j_obs : array-like
+        j_obs : array_like
             List or numpy array of J_lower values associated with each line
         verbose : bool, optional
             Provides numerical values for the observed and modeled column density ratios and fit results
@@ -385,11 +492,16 @@ class H2Model:
         utils._is_jnorm_in(j_obs, self.j_norm)
         
         nratio_obs, _ = self.obs_ratio(j_obs)
-        nratio_obs_err, _ = self.obs_flux_uncert(j_obs)
+        nratio_obs_err, _ = self.obs_ratio_uncert(j_obs)
 
-        params, cov = curve_fit(self.nratio_model, j_obs, np.log(nratio_obs), 
-                                sigma = nratio_obs_err, bounds = ([3., 20.], [7., 300.]))
-        params_uncert = np.sqrt(np.diag(cov))
+        if not exp:
+            params, cov = curve_fit(self.nratio_model, j_obs, np.log(nratio_obs), 
+                                    sigma = nratio_obs_err, bounds = ([3., 20.], [7., 300.]))
+            params_uncert = np.sqrt(np.diag(cov))
+        else:
+            params, cov = curve_fit(self.nratio_model_exp, j_obs, np.log(nratio_obs), 
+                                    sigma = nratio_obs_err, bounds = ([3., 20.], [7., 300.]))
+            params_uncert = np.sqrt(np.diag(cov))
 
         print("Modeling column density ratios for  J_lower =",str(j_obs))
         if verbose == True:
@@ -410,7 +522,7 @@ class H2Model:
         
         Parameters
         ----------
-        j_obs : array-like
+        j_obs : array_like
             List or numpy array of J_lower values associated with each line
         j_calc : int
             Value of J_lower for the transition on which to base the column calculation
@@ -436,7 +548,7 @@ class H2Model:
             j_obs = np.array(j_obs)
             j_is_in = [j in j_obs for j in self.j_obs]
             flux_ = self.flux[j_is_in]
-            flux_ = utils._convert_to_cgs(self, flux_)
+            flux_ = utils._convert_to_cgs(flux_)
         
             idx = np.where(j_obs == j_calc)[0][0]
     
@@ -461,7 +573,7 @@ class H2Model:
         
         Parameters
         ----------
-        j_obs : array-like
+        j_obs : array_like
             List or numpy array of J_lower values associated with each line
         j_calc : int
             Value of J_lower for the transition on which to base the column calculation
@@ -538,9 +650,9 @@ class H2Model:
         
         Parameters
         ----------
-        j_obs : array-like
+        j_obs : array_like
             List or numpy array of J_lower values associated with each line
-        obs_ratio : array-like
+        obs_ratio : array_like
             List or numpy array of normalized column density ratios
         ax : pyplot Axis
             Axis on which to draw line
@@ -572,7 +684,7 @@ class H2Model:
         
         Parameters
         ----------
-        j_obs : array-like
+        j_obs : array_like
             List or numpy array of J_lower values associated with each line
         n : float
             Slope of the power-law temperature distribution
